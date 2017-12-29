@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	dbFile              = "blockchain.db"
+	dbFile              = "blockchain_%s.db"
 	blocksBucket        = "blocks"
 	genesisCoinbaseData = "It's me, Mario!"
 )
@@ -30,7 +30,7 @@ type BlockchainIterator struct {
 }
 
 // CreateBlockchain creates a new blockchain DB
-func CreateBlockchain(address string, nodeID string) (*Blockchain, error) {
+func CreateBlockchain(address string, nodeID int) (*Blockchain, error) {
 	dbFile := fmt.Sprintf("blockchain_%s.db", nodeID)
 	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
@@ -76,8 +76,8 @@ func CreateBlockchain(address string, nodeID string) (*Blockchain, error) {
 }
 
 // NewBlockchain creates a new Blockchain with genesis Block
-func NewBlockchain(nodeID string) (*Blockchain, error) {
-	dbFile := fmt.Sprintf("blockchain_%s.db", nodeID)
+func NewBlockchain(nodeID int) (*Blockchain, error) {
+	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists(dbFile) == false {
 		return nil, fmt.Errorf("no existing blockchain found")
 	}

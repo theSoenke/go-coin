@@ -28,16 +28,18 @@ var cmdSend = &cobra.Command{
 		if sendAmount < 0 {
 			err := fmt.Errorf("amount needs to be > 0")
 			printErr(err)
-
 		}
 
-		bc, err := coin.NewBlockchain("1")
+		bc, err := coin.NewBlockchain(nodeID)
 		printErr(err)
 		defer bc.DB.Close()
 
-		UTXOSet := coin.UTXOSet{Blockchain: bc}
+		wallets, err := coin.NewWallets(nodeID)
+		printErr(err)
 
-		tx, err := coin.NewUTXOTransaction(sendFrom, sendTo, sendAmount, &UTXOSet)
+		wallet := wallets.GetWallet(sendFrom)
+		UTXOSet := coin.UTXOSet{Blockchain: bc}
+		tx, err := coin.NewUTXOTransaction(&wallet, sendTo, sendAmount, &UTXOSet)
 		printErr(err)
 
 		if mineNow {

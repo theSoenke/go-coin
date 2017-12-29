@@ -8,7 +8,6 @@ import (
 	"github.com/thesoenke/go-coin/server"
 )
 
-var nodeID string
 var minerAddress string
 var cmdServer = &cobra.Command{
 	Use:   "server",
@@ -25,7 +24,6 @@ var cmdServer = &cobra.Command{
 }
 
 func init() {
-	cmdServer.PersistentFlags().StringVar(&nodeID, "node", "", "ID of the node to identify on a single machine")
 	cmdServer.PersistentFlags().StringVar(&minerAddress, "address", "", "Address of the miner for rewards")
 	RootCmd.AddCommand(cmdServer)
 }

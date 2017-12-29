@@ -29,7 +29,7 @@ func getBalance(address string) int {
 		printErr(err)
 	}
 
-	bc, err := coin.NewBlockchain("1")
+	bc, err := coin.NewBlockchain(nodeID)
 	printErr(err)
 	defer bc.DB.Close()
 

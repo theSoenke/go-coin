@@ -144,35 +144,25 @@ func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 }
 
 // NewUTXOTransaction creates a new transaction
-func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*Transaction, error) {
+func NewUTXOTransaction(wallet *Wallet, to string, amount int, UTXOSet *UTXOSet) (*Transaction, error) {
 	var inputs []TXInput
 	var outputs []TXOutput
 
-	wallets, err := NewWallets()
-	if err != nil {
-		return nil, err
-	}
-
-	wallet := wallets.GetWallet(from)
-	pubKeyHash, err := HashPubKey(wallet.PublicKey)
-	if err != nil {
-		return nil, err
-	}
-
+	pubKeyHash := HashPubKey(wallet.PublicKey)
 	acc, validOutputs, err := UTXOSet.FindSpendableOutputs(pubKeyHash, amount)
 	if err != nil {
 		return nil, err
 	}
 
 	if acc < amount {
-		return nil, fmt.Errorf("not enough funds in '%s'", from)
+		return nil, fmt.Errorf("not enough funds in '%s'", wallet.GetAddress())
 	}
 
 	// Build a list of inputs
 	for txid, outs := range validOutputs {
 		txID, err := hex.DecodeString(txid)
 		if err != nil {
-			return nil, err
+			log.Panic(err)
 		}
 
 		for _, out := range outs {
@@ -182,6 +172,7 @@ func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*Transac
 	}
 
 	// Build a list of outputs
+	from := fmt.Sprintf("%s", wallet.GetAddress())
 	outputs = append(outputs, *NewTXOutput(amount, to))
 	if acc > amount {
 		outputs = append(outputs, *NewTXOutput(acc-amount, from)) // a change

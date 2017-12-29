@@ -11,10 +11,11 @@ var cmdWallet = &cobra.Command{
 	Use:   "wallet",
 	Short: "Create a new wallet",
 	Run: func(cmd *cobra.Command, args []string) {
-		wallets, _ := coin.NewWallets()
+		wallets, err := coin.NewWallets(nodeID)
+		printErr(err)
 		address, err := wallets.CreateWallet()
 		printErr(err)
-		err = wallets.SaveToFile()
+		err = wallets.SaveToFile(nodeID)
 		printErr(err)
 		fmt.Printf("Your new address: %s\n", address)
 	},

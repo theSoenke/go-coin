@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var nodeID int
+
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "coin",
@@ -20,4 +22,8 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
+}
+
+func init() {
+	RootCmd.PersistentFlags().IntVar(&nodeID, "node", 1, "ID of the node to identify on a single machine")
 }

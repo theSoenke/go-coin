@@ -5,6 +5,8 @@ import (
 	"os"
 )
 
+const genesisNodeID = 1
+
 func main() {
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)

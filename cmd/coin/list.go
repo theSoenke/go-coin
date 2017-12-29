@@ -11,7 +11,7 @@ var cmdList = &cobra.Command{
 	Use:   "list",
 	Short: "List addresses stored in wallet file",
 	Run: func(cmd *cobra.Command, args []string) {
-		wallets, err := coin.NewWallets()
+		wallets, err := coin.NewWallets(nodeID)
 		if err != nil {
 			printErr(err)
 		}
