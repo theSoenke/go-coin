@@ -23,7 +23,8 @@ type BlockchainIterator struct {
 	db          *bolt.DB
 }
 
-func (bc *Blockchain) AddBlock(data string) {
+// AddBlock to the blockchain
+func (bc *Blockchain) AddBlock(data string) error {
 	var lastHash []byte
 	err := bc.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
@@ -32,7 +33,7 @@ func (bc *Blockchain) AddBlock(data string) {
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
 	newBlock := NewBlock(data, lastHash)
@@ -40,24 +41,27 @@ func (bc *Blockchain) AddBlock(data string) {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(newBlock.Hash, newBlock.Serialize())
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
 
 		err = b.Put([]byte("l"), newBlock.Hash)
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
 
 		bc.tip = newBlock.Hash
 		return nil
 	})
+
+	return nil
 }
 
-func NewBlockchain() *Blockchain {
+// NewBlockchain from existing boltdb file. Otherwise new boltdb bucket is created
+func NewBlockchain() (*Blockchain, error) {
 	var tip []byte
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
-		log.Panic(err)
+		return nil, err
 	}
 
 	err = db.Update(func(tx *bolt.Tx) error {
@@ -67,17 +71,17 @@ func NewBlockchain() *Blockchain {
 			genesis := NewGenesisBlock()
 			b, err := tx.CreateBucket([]byte(blocksBucket))
 			if err != nil {
-				log.Panic(err)
+				return err
 			}
 
 			err = b.Put(genesis.Hash, genesis.Serialize())
 			if err != nil {
-				log.Panic(err)
+				return err
 			}
 
 			err = b.Put([]byte("l"), genesis.Hash)
 			if err != nil {
-				log.Panic(err)
+				return err
 			}
 
 			tip = genesis.Hash
@@ -89,15 +93,17 @@ func NewBlockchain() *Blockchain {
 	})
 
 	bc := Blockchain{tip, db}
-	return &bc
+	return &bc, nil
 }
 
+// Iterator for the blockchain
 func (bc *Blockchain) Iterator() *BlockchainIterator {
 	bci := &BlockchainIterator{bc.tip, bc.DB}
 
 	return bci
 }
 
+// Next block in the blockchain
 func (i *BlockchainIterator) Next() *Block {
 	var block *Block
 
@@ -117,6 +123,7 @@ func (i *BlockchainIterator) Next() *Block {
 	return block
 }
 
+// Print log of the blockchain
 func (bc *Blockchain) Print() {
 	bci := bc.Iterator()
 

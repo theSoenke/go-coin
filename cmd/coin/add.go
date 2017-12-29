@@ -9,7 +9,11 @@ var cmdAddBlock = &cobra.Command{
 	Use:   "add",
 	Short: "Add a block to the Blockchain",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bc := coin.NewBlockchain()
+		bc, err := coin.NewBlockchain()
+		if err != nil {
+			return err
+		}
+
 		defer bc.DB.Close()
 		data := args[0]
 		bc.AddBlock(data)

@@ -6,10 +6,14 @@ import (
 )
 
 var cmdPrint = &cobra.Command{
-	Use:   "print",
-	Short: "Print the blockchain",
+	Use:   "log",
+	Short: "Print the Blockchain log",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bc := coin.NewBlockchain()
+		bc, err := coin.NewBlockchain()
+		if err != nil {
+			return err
+		}
+
 		defer bc.DB.Close()
 		bc.Print()
 		return nil
