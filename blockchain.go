@@ -330,7 +330,7 @@ func (bc *Blockchain) FindTransaction(ID []byte) (Transaction, error) {
 		}
 	}
 
-	return Transaction{}, errors.New("Transaction is not found")
+	return Transaction{}, fmt.Errorf("transaction '%s' not found", string(ID))
 }
 
 // GetBestHeight returns the height of the latest block

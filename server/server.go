@@ -53,7 +53,7 @@ type tx struct {
 	Transaction []byte
 }
 
-type verzion struct {
+type version struct {
 	Version    int
 	BestHeight int
 	AddrFrom   string
@@ -154,6 +154,10 @@ func sendGetData(address, kind string, id []byte) {
 	sendData(address, request)
 }
 
+func SendTx(tx *coin.Transaction) {
+	sendTx(knownNodes[0], tx)
+}
+
 func sendTx(addr string, tnx *coin.Transaction) {
 	data := tx{nodeAddress, tnx.Serialize()}
 	payload := gobEncode(data)
@@ -164,7 +168,7 @@ func sendTx(addr string, tnx *coin.Transaction) {
 
 func sendVersion(addr string, bc *coin.Blockchain) {
 	bestHeight := bc.GetBestHeight()
-	payload := gobEncode(verzion{nodeVersion, bestHeight, nodeAddress})
+	payload := gobEncode(version{nodeVersion, bestHeight, nodeAddress})
 
 	request := append(commandToBytes("version"), payload...)
 
@@ -231,7 +235,7 @@ func handleInv(request []byte, bc *coin.Blockchain) {
 		log.Panic(err)
 	}
 
-	fmt.Printf("Recevied inventory with %d %s\n", len(payload.Items), payload.Type)
+	fmt.Printf("Received inventory with %d %s\n", len(payload.Items), payload.Type)
 
 	if payload.Type == "block" {
 		blocksInTransit = payload.Items
@@ -374,7 +378,7 @@ func handleTx(request []byte, bc *coin.Blockchain) {
 
 func handleVersion(request []byte, bc *coin.Blockchain) {
 	var buff bytes.Buffer
-	var payload verzion
+	var payload version
 
 	buff.Write(request[commandLength:])
 	dec := gob.NewDecoder(&buff)
