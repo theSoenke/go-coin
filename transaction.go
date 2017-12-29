@@ -144,7 +144,7 @@ func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 }
 
 // NewUTXOTransaction creates a new transaction
-func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*Transaction, error) {
+func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) (*Transaction, error) {
 	var inputs []TXInput
 	var outputs []TXOutput
 
@@ -159,7 +159,7 @@ func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*Transac
 		return nil, err
 	}
 
-	acc, validOutputs, err := UTXOSet.FindSpendableOutputs(pubKeyHash, amount)
+	acc, validOutputs := bc.FindSpendableOutputs(pubKeyHash, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*Transac
 
 	tx := Transaction{nil, inputs, outputs}
 	tx.ID = tx.Hash()
-	UTXOSet.Blockchain.SignTransaction(&tx, wallet.PrivateKey)
+	// bc.SignTransaction(&tx, wallet.PrivateKey)
 
 	return &tx, nil
 }

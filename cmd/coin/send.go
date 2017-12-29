@@ -14,23 +14,29 @@ var cmdSend = &cobra.Command{
 	Use:   "send",
 	Short: "Send a transaction to an address",
 	Run: func(cmd *cobra.Command, args []string) {
+		if !coin.ValidateAddress(sendFrom) {
+			err := fmt.Errorf("sender address '%s' is not valid", sendFrom)
+			printErr(err)
+		}
+		if !coin.ValidateAddress(sendTo) {
+			err := fmt.Errorf("receiver address '%s' is not valid", sendTo)
+			printErr(err)
+		}
+
+		if sendAmount < 0 {
+			err := fmt.Errorf("amount needs to be > 0")
+			printErr(err)
+
+		}
+
 		bc, err := coin.NewBlockchain()
 		printErr(err)
 		defer bc.DB.Close()
 
-		err = validateSendInput(sendFrom, sendTo, sendAmount)
+		tx, err := coin.NewUTXOTransaction(sendFrom, sendTo, sendAmount, bc)
 		printErr(err)
-
-		UTXOSet := coin.UTXOSet{Blockchain: bc}
-		tx, err := coin.NewUTXOTransaction(sendFrom, sendTo, sendAmount, &UTXOSet)
+		_, err = bc.MineBlock([]*coin.Transaction{tx})
 		printErr(err)
-
-		cbTx := coin.NewCoinbaseTX(sendFrom, "")
-		txs := []*coin.Transaction{cbTx, tx}
-		newBlock, err := bc.MineBlock(txs)
-		printErr(err)
-
-		UTXOSet.Update(newBlock)
 		fmt.Println("Success!")
 	},
 }
@@ -40,13 +46,4 @@ func init() {
 	cmdSend.PersistentFlags().StringVar(&sendTo, "to", "", "Receiver of the transaction")
 	cmdSend.PersistentFlags().IntVar(&sendAmount, "amount", 0, "Amount that will be send")
 	RootCmd.AddCommand(cmdSend)
-}
-
-func validateSendInput(from string, to string, amount int) error {
-	// TODO better error messages
-	if from == "" || to == "" || amount <= 0 {
-		return fmt.Errorf("Please check your input")
-	}
-
-	return nil
 }
