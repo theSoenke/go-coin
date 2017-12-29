@@ -178,13 +178,28 @@ func (bc *Blockchain) FindUnspentTransactions(address string) []Transaction {
 	return unspentTXs
 }
 
+// FindUTXO finds and returns all unspent transaction outputs
+func (bc *Blockchain) FindUTXO(address string) []TXOutput {
+	var UTXOs []TXOutput
+	unspentTransactions := bc.FindUnspentTransactions(address)
+
+	for _, tx := range unspentTransactions {
+		for _, out := range tx.Vout {
+			if out.CanBeUnlockedWith(address) {
+				UTXOs = append(UTXOs, out)
+			}
+		}
+	}
+
+	return UTXOs
+}
+
 // FindSpendableOutputs finds and returns unspent outputs to reference in inputs
 func (bc *Blockchain) FindSpendableOutputs(address string, amount int) (int, map[string][]int) {
 	unspentOutputs := make(map[string][]int)
 	unspentTXs := bc.FindUnspentTransactions(address)
 	accumulated := 0
 
-Work:
 	for _, tx := range unspentTXs {
 		txID := hex.EncodeToString(tx.ID)
 
@@ -194,7 +209,7 @@ Work:
 				unspentOutputs[txID] = append(unspentOutputs[txID], outIdx)
 
 				if accumulated >= amount {
-					break Work
+					return accumulated, unspentOutputs
 				}
 			}
 		}
