@@ -33,9 +33,17 @@ var cmdSend = &cobra.Command{
 		printErr(err)
 		defer bc.DB.Close()
 
-		tx, err := coin.NewUTXOTransaction(sendFrom, sendTo, sendAmount, bc)
+		UTXOSet := coin.UTXOSet{Blockchain: bc}
+
+		tx, err := coin.NewUTXOTransaction(sendFrom, sendTo, sendAmount, &UTXOSet)
 		printErr(err)
-		_, err = bc.MineBlock([]*coin.Transaction{tx})
+		cbTx := coin.NewCoinbaseTX(sendFrom, "")
+		txs := []*coin.Transaction{cbTx, tx}
+
+		newBlock, err := bc.MineBlock(txs)
+		printErr(err)
+
+		err = UTXOSet.Update(newBlock)
 		printErr(err)
 		fmt.Println("Success!")
 	},

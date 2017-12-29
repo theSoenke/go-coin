@@ -24,7 +24,9 @@ var cmdBalance = &cobra.Command{
 		balance := 0
 		pubKeyHash := coin.Base58Decode([]byte(balanceAddress))
 		pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
-		UTXOs := bc.FindUTXO(pubKeyHash)
+		UTXOSet := coin.UTXOSet{Blockchain: bc}
+		UTXOs, err := UTXOSet.FindUTXO(pubKeyHash)
+		printErr(err)
 
 		for _, out := range UTXOs {
 			balance += out.Value

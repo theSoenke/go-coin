@@ -12,7 +12,10 @@ var cmdCreate = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		bc, err := coin.CreateBlockchain(genesisRewardAddress)
 		printErr(err)
-		bc.DB.Close()
+		defer bc.DB.Close()
+
+		UTXOSet := coin.UTXOSet{Blockchain: bc}
+		UTXOSet.Reindex()
 	},
 }
 
