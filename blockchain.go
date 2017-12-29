@@ -30,16 +30,23 @@ type BlockchainIterator struct {
 }
 
 // MineBlock mines a new block with the provided transactions
-func (bc *Blockchain) MineBlock(transactions []*Transaction) error {
+func (bc *Blockchain) MineBlock(transactions []*Transaction) (*Block, error) {
 	var lastHash []byte
+
+	for _, tx := range transactions {
+		if bc.VerifyTransaction(tx) != true {
+			return nil, fmt.Errorf("invalid transaction")
+		}
+	}
 
 	err := bc.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		lastHash = b.Get([]byte("l"))
+
 		return nil
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	newBlock := NewBlock(transactions, lastHash)
@@ -47,7 +54,7 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(newBlock.Hash, newBlock.Serialize())
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
 
 		err = b.Put([]byte("l"), newBlock.Hash)
@@ -56,11 +63,13 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) error {
 		}
 
 		bc.tip = newBlock.Hash
-
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return err
+	return newBlock, nil
 }
 
 // NewBlockchain creates a new Blockchain with genesis Block
@@ -134,6 +143,25 @@ func CreateBlockchain(address string) (*Blockchain, error) {
 	return &bc, nil
 }
 
+// VerifyTransaction verifies transaction input signatures
+func (bc *Blockchain) VerifyTransaction(tx *Transaction) bool {
+	if tx.IsCoinbase() {
+		return true
+	}
+
+	prevTXs := make(map[string]Transaction)
+
+	for _, vin := range tx.Vin {
+		prevTX, err := bc.FindTransaction(vin.Txid)
+		if err != nil {
+			log.Panic(err)
+		}
+		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
+	}
+
+	return tx.Verify(prevTXs)
+}
+
 // FindUnspentTransactions returns a list of transactions containing unspent outputs
 func (bc *Blockchain) FindUnspentTransactions(pubKeyHash []byte) []Transaction {
 	var unspentTXs []Transaction
@@ -180,22 +208,6 @@ func (bc *Blockchain) FindUnspentTransactions(pubKeyHash []byte) []Transaction {
 	return unspentTXs
 }
 
-// FindUTXO finds and returns all unspent transaction outputs
-func (bc *Blockchain) FindUTXO(pubKeyHash []byte) []TXOutput {
-	var UTXOs []TXOutput
-	unspentTransactions := bc.FindUnspentTransactions(pubKeyHash)
-
-	for _, tx := range unspentTransactions {
-		for _, out := range tx.Vout {
-			if out.IsLockedWithKey(pubKeyHash) {
-				UTXOs = append(UTXOs, out)
-			}
-		}
-	}
-
-	return UTXOs
-}
-
 // FindSpendableOutputs finds and returns unspent outputs to reference in inputs
 func (bc *Blockchain) FindSpendableOutputs(pubKeyHash []byte, amount int) (int, map[string][]int) {
 	unspentOutputs := make(map[string][]int)
@@ -221,19 +233,48 @@ Work:
 	return accumulated, unspentOutputs
 }
 
-// SignTransaction signs inputs of a Transaction
-func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey) {
-	prevTXs := make(map[string]Transaction)
+// FindUTXO finds all unspent transaction outputs and returns transactions with spent outputs removed
+func (bc *Blockchain) FindUTXO() map[string]TXOutputs {
+	UTXO := make(map[string]TXOutputs)
+	spentTXOs := make(map[string][]int)
+	bci := bc.Iterator()
 
-	for _, vin := range tx.Vin {
-		prevTX, err := bc.FindTransaction(vin.Txid)
-		if err != nil {
-			log.Panic(err)
+	for {
+		block := bci.Next()
+
+		for _, tx := range block.Transactions {
+			txID := hex.EncodeToString(tx.ID)
+
+		Outputs:
+			for outIdx, out := range tx.Vout {
+				// Was the output spent?
+				if spentTXOs[txID] != nil {
+					for _, spentOutIdx := range spentTXOs[txID] {
+						if spentOutIdx == outIdx {
+							continue Outputs
+						}
+					}
+				}
+
+				outs := UTXO[txID]
+				outs.Outputs = append(outs.Outputs, out)
+				UTXO[txID] = outs
+			}
+
+			if tx.IsCoinbase() == false {
+				for _, in := range tx.Vin {
+					inTxID := hex.EncodeToString(in.Txid)
+					spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Vout)
+				}
+			}
 		}
-		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
+
+		if len(block.PrevBlockHash) == 0 {
+			break
+		}
 	}
 
-	tx.Sign(privKey, prevTXs)
+	return UTXO
 }
 
 // FindTransaction finds a transaction by its ID
@@ -255,6 +296,21 @@ func (bc *Blockchain) FindTransaction(ID []byte) (Transaction, error) {
 	}
 
 	return Transaction{}, errors.New("Transaction is not found")
+}
+
+// SignTransaction signs inputs of a Transaction
+func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey) {
+	prevTXs := make(map[string]Transaction)
+
+	for _, vin := range tx.Vin {
+		prevTX, err := bc.FindTransaction(vin.Txid)
+		if err != nil {
+			log.Panic(err)
+		}
+		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
+	}
+
+	tx.Sign(privKey, prevTXs)
 }
 
 // Iterator for the Blockchain

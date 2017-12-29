@@ -3,12 +3,14 @@ package coin
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/big"
 )
 
 const subsidy = 10
@@ -65,16 +67,9 @@ func (tx Transaction) SetID() {
 	tx.ID = hash[:]
 }
 
-// Sign signs each input of a Transaction
-func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transaction) {
+func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transaction) error {
 	if tx.IsCoinbase() {
-		return
-	}
-
-	for _, vin := range tx.Vin {
-		if prevTXs[hex.EncodeToString(vin.Txid)].ID == nil {
-			log.Panic("ERROR: Previous transaction is not correct")
-		}
+		return nil
 	}
 
 	txCopy := tx.TrimmedCopy()
@@ -88,12 +83,14 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transac
 
 		r, s, err := ecdsa.Sign(rand.Reader, &privKey, txCopy.ID)
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
-		signature := append(r.Bytes(), s.Bytes()...)
 
+		signature := append(r.Bytes(), s.Bytes()...)
 		tx.Vin[inID].Signature = signature
 	}
+
+	return nil
 }
 
 // TrimmedCopy creates a trimmed copy of Transaction to be used in signing
@@ -114,8 +111,40 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 	return txCopy
 }
 
+func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
+	txCopy := tx.TrimmedCopy()
+	curve := elliptic.P256()
+
+	for inID, vin := range tx.Vin {
+		prevTx := prevTXs[hex.EncodeToString(vin.Txid)]
+		txCopy.Vin[inID].Signature = nil
+		txCopy.Vin[inID].PubKey = prevTx.Vout[vin.Vout].PubKeyHash
+		txCopy.ID = txCopy.Hash()
+		txCopy.Vin[inID].PubKey = nil
+
+		r := big.Int{}
+		s := big.Int{}
+		sigLen := len(vin.Signature)
+		r.SetBytes(vin.Signature[:(sigLen / 2)])
+		s.SetBytes(vin.Signature[(sigLen / 2):])
+
+		x := big.Int{}
+		y := big.Int{}
+		keyLen := len(vin.PubKey)
+		x.SetBytes(vin.PubKey[:(keyLen / 2)])
+		y.SetBytes(vin.PubKey[(keyLen / 2):])
+
+		rawPubKey := ecdsa.PublicKey{curve, &x, &y}
+		if ecdsa.Verify(&rawPubKey, txCopy.ID, &r, &s) == false {
+			return false
+		}
+	}
+
+	return true
+}
+
 // NewUTXOTransaction creates a new transaction
-func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) (*Transaction, error) {
+func NewUTXOTransaction(from, to string, amount int, UTXOSet *UTXOSet) (*Transaction, error) {
 	var inputs []TXInput
 	var outputs []TXOutput
 
@@ -130,9 +159,13 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) (*Transacti
 		return nil, err
 	}
 
-	acc, validOutputs := bc.FindSpendableOutputs(pubKeyHash, amount)
+	acc, validOutputs, err := UTXOSet.FindSpendableOutputs(pubKeyHash, amount)
+	if err != nil {
+		return nil, err
+	}
+
 	if acc < amount {
-		log.Panic("ERROR: Not enough funds")
+		return nil, fmt.Errorf("not enough funds in '%s'", from)
 	}
 
 	// Build a list of inputs
@@ -156,7 +189,7 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) (*Transacti
 
 	tx := Transaction{nil, inputs, outputs}
 	tx.ID = tx.Hash()
-	bc.SignTransaction(&tx, wallet.PrivateKey)
+	UTXOSet.Blockchain.SignTransaction(&tx, wallet.PrivateKey)
 
 	return &tx, nil
 }

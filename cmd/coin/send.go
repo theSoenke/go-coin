@@ -21,11 +21,16 @@ var cmdSend = &cobra.Command{
 		err = validateSendInput(sendFrom, sendTo, sendAmount)
 		printErr(err)
 
-		tx, err := coin.NewUTXOTransaction(sendFrom, sendTo, sendAmount, bc)
+		UTXOSet := coin.UTXOSet{Blockchain: bc}
+		tx, err := coin.NewUTXOTransaction(sendFrom, sendTo, sendAmount, &UTXOSet)
 		printErr(err)
 
-		err = bc.MineBlock([]*coin.Transaction{tx})
+		cbTx := coin.NewCoinbaseTX(sendFrom, "")
+		txs := []*coin.Transaction{cbTx, tx}
+		newBlock, err := bc.MineBlock(txs)
 		printErr(err)
+
+		UTXOSet.Update(newBlock)
 		fmt.Println("Success!")
 	},
 }
