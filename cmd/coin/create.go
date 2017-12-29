@@ -16,7 +16,6 @@ var cmdCreate = &cobra.Command{
 		}
 
 		defer bc.DB.Close()
-		bc.Print()
 		return nil
 	},
 }

@@ -30,9 +30,9 @@ var cmdSend = &cobra.Command{
 			return err
 		}
 
-		bc.MineBlock([]*coin.Transaction{tx})
+		err = bc.MineBlock([]*coin.Transaction{tx})
 		fmt.Println("Success!")
-		return nil
+		return err
 	},
 }
 

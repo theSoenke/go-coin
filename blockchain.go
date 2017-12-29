@@ -27,22 +27,19 @@ type BlockchainIterator struct {
 }
 
 // MineBlock mines a new block with the provided transactions
-func (bc *Blockchain) MineBlock(transactions []*Transaction) {
+func (bc *Blockchain) MineBlock(transactions []*Transaction) error {
 	var lastHash []byte
 
 	err := bc.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		lastHash = b.Get([]byte("l"))
-
 		return nil
 	})
-
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
 	newBlock := NewBlock(transactions, lastHash)
-
 	err = bc.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(newBlock.Hash, newBlock.Serialize())
@@ -52,13 +49,15 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) {
 
 		err = b.Put([]byte("l"), newBlock.Hash)
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
 
 		bc.tip = newBlock.Hash
 
 		return nil
 	})
+
+	return err
 }
 
 // NewBlockchain creates a new Blockchain with genesis Block
