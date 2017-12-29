@@ -11,3 +11,10 @@ func main() {
 		os.Exit(1)
 	}
 }
+
+func printErr(err error) {
+	if err != nil {
+		fmt.Printf("Error: %s\n", err)
+		os.Exit(1)
+	}
+}

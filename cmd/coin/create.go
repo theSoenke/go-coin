@@ -9,14 +9,10 @@ var address string
 var cmdCreate = &cobra.Command{
 	Use:   "create-chain",
 	Short: "Create a new Blockchain",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		bc, err := coin.CreateBlockchain(address)
-		if err != nil {
-			return err
-		}
-
-		defer bc.DB.Close()
-		return nil
+		printErr(err)
+		bc.DB.Close()
 	},
 }
 

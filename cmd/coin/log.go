@@ -8,15 +8,12 @@ import (
 var cmdLog = &cobra.Command{
 	Use:   "log",
 	Short: "Print the Blockchain log",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		bc, err := coin.NewBlockchain()
-		if err != nil {
-			return err
-		}
+		printErr(err)
 
 		defer bc.DB.Close()
 		bc.Print()
-		return nil
 	},
 }
 

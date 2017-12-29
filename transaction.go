@@ -77,7 +77,7 @@ func NewUTXOTransaction(from, to string, amount int, bc *Blockchain) (*Transacti
 	acc, validOutputs := bc.FindSpendableOutputs(from, amount)
 
 	if acc < amount {
-		return nil, fmt.Errorf("adress %s does not have enough funds", from)
+		return nil, fmt.Errorf("address '%s' does not have enough funds", from)
 	}
 
 	// Build a list of inputs

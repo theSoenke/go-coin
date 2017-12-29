@@ -13,26 +13,20 @@ var sendAmount int
 var cmdSend = &cobra.Command{
 	Use:   "send",
 	Short: "Send a transaction to an address",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		bc, err := coin.NewBlockchain()
-		if err != nil {
-			return err
-		}
-
+		printErr(err)
 		defer bc.DB.Close()
+
 		err = validateSendInput(sendFrom, sendTo, sendAmount)
-		if err != nil {
-			return err
-		}
+		printErr(err)
 
 		tx, err := coin.NewUTXOTransaction(sendFrom, sendTo, sendAmount, bc)
-		if err != nil {
-			return err
-		}
+		printErr(err)
 
 		err = bc.MineBlock([]*coin.Transaction{tx})
+		printErr(err)
 		fmt.Println("Success!")
-		return err
 	},
 }
 

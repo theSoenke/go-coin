@@ -11,11 +11,9 @@ var balanceAddress string
 var cmdBalance = &cobra.Command{
 	Use:   "balance",
 	Short: "Get balance of address",
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Run: func(cmd *cobra.Command, args []string) {
 		bc, err := coin.NewBlockchain()
-		if err != nil {
-			return err
-		}
+		printErr(err)
 
 		balance := 0
 		UTXOs := bc.FindUTXO(balanceAddress)
@@ -24,7 +22,6 @@ var cmdBalance = &cobra.Command{
 		}
 
 		fmt.Printf("Balance of '%s': %d\n", balanceAddress, balance)
-		return nil
 	},
 }
 
