@@ -26,10 +26,24 @@ func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
 	return block
 }
 
+// NewGenesisBlock creates the initial Blockchain block
 func NewGenesisBlock(coinbase *Transaction) *Block {
 	return NewBlock([]*Transaction{coinbase}, []byte{})
 }
 
+// HashTransactions in a block with a Merkle Tree
+func (b *Block) HashTransactions() []byte {
+	var transactions [][]byte
+
+	for _, tx := range b.Transactions {
+		transactions = append(transactions, tx.Serialize())
+	}
+
+	mTree := NewMerkleTree(transactions)
+	return mTree.RootNode.Data
+}
+
+// Serialize a block
 func (b *Block) Serialize() []byte {
 	var result bytes.Buffer
 	encoder := gob.NewEncoder(&result)
