@@ -9,7 +9,7 @@ var cmdLog = &cobra.Command{
 	Use:   "log",
 	Short: "Print the Blockchain log",
 	Run: func(cmd *cobra.Command, args []string) {
-		bc, err := coin.NewBlockchain("")
+		bc, err := coin.NewBlockchain("1")
 		printErr(err)
 
 		defer bc.DB.Close()

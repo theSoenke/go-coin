@@ -205,3 +205,12 @@ func (tx *Transaction) Hash() []byte {
 
 	return hash[:]
 }
+
+// DeserializeTransaction deserializes a transaction
+func DeserializeTransaction(data []byte) (Transaction, error) {
+	var transaction Transaction
+
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err := decoder.Decode(&transaction)
+	return transaction, err
+}

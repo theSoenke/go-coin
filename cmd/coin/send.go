@@ -29,7 +29,7 @@ var cmdSend = &cobra.Command{
 
 		}
 
-		bc, err := coin.NewBlockchain("")
+		bc, err := coin.NewBlockchain("1")
 		printErr(err)
 		defer bc.DB.Close()
 
