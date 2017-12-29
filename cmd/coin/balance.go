@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/thesoenke/coin"
@@ -13,15 +12,17 @@ var cmdBalance = &cobra.Command{
 	Use:   "balance",
 	Short: "Get balance of address",
 	Run: func(cmd *cobra.Command, args []string) {
-		if !coin.ValidateAddress(address) {
-			log.Panic("ERROR: Address is not valid")
+		if !coin.ValidateAddress(balanceAddress) {
+			err := fmt.Errorf("address '%s' is not valid", balanceAddress)
+			printErr(err)
 		}
+
 		bc, err := coin.NewBlockchain()
 		printErr(err)
 		defer bc.DB.Close()
 
 		balance := 0
-		pubKeyHash := coin.Base58Decode([]byte(address))
+		pubKeyHash := coin.Base58Decode([]byte(balanceAddress))
 		pubKeyHash = pubKeyHash[1 : len(pubKeyHash)-4]
 		UTXOs := bc.FindUTXO(pubKeyHash)
 
@@ -29,7 +30,7 @@ var cmdBalance = &cobra.Command{
 			balance += out.Value
 		}
 
-		fmt.Printf("Balance of '%s': %d\n", address, balance)
+		fmt.Printf("Balance of '%s': %d\n", balanceAddress, balance)
 	},
 }
 

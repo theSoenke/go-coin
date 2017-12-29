@@ -12,7 +12,7 @@ import (
 
 const (
 	maxNonce   = math.MaxInt64
-	targetBits = 24
+	targetBits = 20
 )
 
 type ProofOfWork struct {
