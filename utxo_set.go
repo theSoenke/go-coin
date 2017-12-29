@@ -80,9 +80,6 @@ func (u UTXOSet) FindSpendableOutputs(pubkeyHash []byte, amount int) (int, map[s
 
 		return nil
 	})
-	if err != nil {
-		log.Panic(err)
-	}
 
 	return accumulated, unspentOutputs, err
 }
@@ -166,4 +163,23 @@ func (u UTXOSet) Update(block *Block) error {
 	})
 
 	return err
+}
+
+// CountTransactions returns the number of transactions in the UTXO set
+func (u UTXOSet) CountTransactions() (int, error) {
+	db := u.Blockchain.DB
+	counter := 0
+
+	err := db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(utxoBucket))
+		c := b.Cursor()
+
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			counter++
+		}
+
+		return nil
+	})
+
+	return counter, err
 }
