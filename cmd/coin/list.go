@@ -7,8 +7,8 @@ import (
 	"github.com/thesoenke/coin"
 )
 
-var cmdAddresses = &cobra.Command{
-	Use:   "addresses",
+var cmdList = &cobra.Command{
+	Use:   "list",
 	Short: "List addresses stored in wallet file",
 	Run: func(cmd *cobra.Command, args []string) {
 		wallets, err := coin.NewWallets()
@@ -18,11 +18,12 @@ var cmdAddresses = &cobra.Command{
 
 		addresses := wallets.GetAddresses()
 		for _, address := range addresses {
-			fmt.Println(address)
+			balance := getBalance(address)
+			fmt.Printf("Address: %s Balance: %d\n", address, balance)
 		}
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(cmdAddresses)
+	RootCmd.AddCommand(cmdList)
 }

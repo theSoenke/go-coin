@@ -17,7 +17,7 @@ var cmdInit = &cobra.Command{
 			printErr(err)
 		}
 
-		bc, err := coin.CreateBlockchain(genesisRewardAddress)
+		bc, err := coin.CreateBlockchain(genesisRewardAddress, "")
 		printErr(err)
 		defer bc.DB.Close()
 

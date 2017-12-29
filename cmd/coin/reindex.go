@@ -11,7 +11,7 @@ var cmdReindex = &cobra.Command{
 	Use:   "reindex",
 	Short: "Reindex unspent transactions (UTXO)",
 	Run: func(cmd *cobra.Command, args []string) {
-		bc, err := coin.NewBlockchain()
+		bc, err := coin.NewBlockchain("")
 		printErr(err)
 
 		UTXOSet := coin.UTXOSet{Blockchain: bc}

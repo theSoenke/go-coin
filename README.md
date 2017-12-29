@@ -3,7 +3,7 @@
 ## Getting started
 1. Create a Wallet
 
-    ```coin create-wallet```
+    ```coin wallet```
 
 2. Initialize the Blockchain
 

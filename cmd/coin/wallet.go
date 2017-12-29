@@ -8,7 +8,7 @@ import (
 )
 
 var cmdWallet = &cobra.Command{
-	Use:   "create-wallet",
+	Use:   "wallet",
 	Short: "Create a new wallet",
 	Run: func(cmd *cobra.Command, args []string) {
 		wallets, _ := coin.NewWallets()
