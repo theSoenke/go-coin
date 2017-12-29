@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/thesoenke/coin"
+	"github.com/thesoenke/go-coin"
 )
 
 var cmdLog = &cobra.Command{

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/thesoenke/coin"
-	"github.com/thesoenke/coin/server"
+	"github.com/thesoenke/go-coin"
+	"github.com/thesoenke/go-coin/server"
 )
 
 var nodeID string

@@ -10,7 +10,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/thesoenke/coin"
+	"github.com/thesoenke/go-coin"
 )
 
 const protocol = "tcp"
