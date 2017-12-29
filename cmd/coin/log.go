@@ -5,7 +5,7 @@ import (
 	"github.com/thesoenke/coin"
 )
 
-var cmdPrint = &cobra.Command{
+var cmdLog = &cobra.Command{
 	Use:   "log",
 	Short: "Print the Blockchain log",
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -21,5 +21,5 @@ var cmdPrint = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(cmdPrint)
+	RootCmd.AddCommand(cmdLog)
 }

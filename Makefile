@@ -1,4 +1,4 @@
-.PHONY: vendor build
+.PHONY: all test vet build
 PACKAGES = $(shell go list ./...)
 
 default: build
