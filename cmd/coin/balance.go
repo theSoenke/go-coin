@@ -23,7 +23,6 @@ func init() {
 }
 
 func getBalance(address string) int {
-
 	if !coin.ValidateAddress(address) {
 		err := fmt.Errorf("address '%s' is not valid", address)
 		printErr(err)

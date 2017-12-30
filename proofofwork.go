@@ -12,7 +12,7 @@ import (
 
 const (
 	maxNonce   = math.MaxInt64
-	targetBits = 20
+	targetBits = 22
 )
 
 type ProofOfWork struct {
@@ -36,9 +36,11 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	for nonce < maxNonce {
 		data := pow.prepareData(nonce)
 		hash = sha256.Sum256(data)
-		fmt.Printf("\r%x", hash)
-		hashInt.SetBytes(hash[:])
+		if math.Remainder(float64(nonce), 1000) == 0 {
+			fmt.Printf("\r%x", hash)
+		}
 
+		hashInt.SetBytes(hash[:])
 		if hashInt.Cmp(pow.target) == -1 {
 			break
 		} else {
