@@ -47,9 +47,9 @@ var cmdSend = &cobra.Command{
 		if mineNow {
 			cbTx := coin.NewCoinbaseTX(sendFrom, "")
 			txs := []*coin.Transaction{cbTx, tx}
-
 			newBlock, err := bc.MineBlock(txs)
 			printErr(err)
+
 			err = UTXOSet.Update(newBlock)
 			printErr(err)
 		} else {

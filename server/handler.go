@@ -224,7 +224,7 @@ func handleTx(request []byte, bc *coin.Blockchain) {
 			UTXOSet := coin.UTXOSet{Blockchain: bc}
 			UTXOSet.Reindex()
 
-			fmt.Println("New block is mined!")
+			fmt.Printf("Mined new block with %d transactions\n", len(txs))
 
 			for _, tx := range txs {
 				txID := hex.EncodeToString(tx.ID)
