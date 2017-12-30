@@ -48,7 +48,7 @@ func (ws Wallets) GetWallet(address string) (Wallet, error) {
 		return *wallet, nil
 	}
 
-	return Wallet{}, fmt.Errorf("address '%s' does not exist", address)
+	return Wallet{}, fmt.Errorf("address '%s' does not exist in your wallet", address)
 }
 
 // LoadFromFile loads wallets from the file
