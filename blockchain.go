@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/boltdb/bolt"
 )
@@ -441,8 +442,10 @@ func (bc *Blockchain) Print() {
 	for {
 		block := bci.Next()
 
+		fmt.Printf("Hash:\t%x\n", block.Hash)
 		fmt.Printf("Prev.:\t%x\n", block.PrevBlockHash)
-		fmt.Printf("Hash\t%x\n", block.Hash)
+		fmt.Printf("Height: %d\n", block.Height)
+		fmt.Printf("Date:\t%s\n", time.Unix(block.Timestamp, 0))
 		pow := NewProofOfWork(block)
 		fmt.Printf("PoW:\t%s\n", strconv.FormatBool(pow.Validate()))
 		fmt.Println()
