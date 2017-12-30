@@ -69,21 +69,27 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transac
 		return nil
 	}
 
+	for _, vin := range tx.Vin {
+		if prevTXs[hex.EncodeToString(vin.Txid)].ID == nil {
+			return fmt.Errorf("previous transaction is not correct")
+		}
+	}
+
 	txCopy := tx.TrimmedCopy()
 	for inID, vin := range txCopy.Vin {
 		prevTx := prevTXs[hex.EncodeToString(vin.Txid)]
 		txCopy.Vin[inID].Signature = nil
 		txCopy.Vin[inID].PubKey = prevTx.Vout[vin.Vout].PubKeyHash
-		txCopy.ID = txCopy.Hash()
-		txCopy.Vin[inID].PubKey = nil
 
-		r, s, err := ecdsa.Sign(rand.Reader, &privKey, txCopy.ID)
+		dataToSign := fmt.Sprintf("%x\n", txCopy)
+		r, s, err := ecdsa.Sign(rand.Reader, &privKey, []byte(dataToSign))
 		if err != nil {
 			return err
 		}
 
 		signature := append(r.Bytes(), s.Bytes()...)
 		tx.Vin[inID].Signature = signature
+		txCopy.Vin[inID].PubKey = nil
 	}
 
 	return nil
@@ -99,7 +105,7 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 	}
 
 	for _, vout := range tx.Vout {
-		outputs = append(outputs, TXOutput{vout.Value, vout.PubKeyHash})
+		outputs = append(outputs, TXOutput{Value: vout.Value, PubKeyHash: vout.PubKeyHash})
 	}
 
 	txCopy := Transaction{tx.ID, inputs, outputs}
@@ -107,7 +113,7 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 	return txCopy
 }
 
-// Verify verifies signatures of Transaction inputs
+// Verify signatures of transaction inputs
 func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 	if tx.IsCoinbase() {
 		return true
@@ -115,7 +121,8 @@ func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 
 	for _, vin := range tx.Vin {
 		if prevTXs[hex.EncodeToString(vin.Txid)].ID == nil {
-			log.Panic("previous transaction is not correct")
+			log.Printf("error: previous transaction of '%s' is not correct\n", vin.Txid)
+			return false
 		}
 	}
 
