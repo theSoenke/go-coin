@@ -14,16 +14,18 @@ import (
 )
 
 const (
-	dbFile              = "blockchain_%s.db"
+	dbFile              = "blockchain_%d.db"
 	blocksBucket        = "blocks"
 	genesisCoinbaseData = "It's me, Mario!"
 )
 
+// Blockchain references the DB
 type Blockchain struct {
 	tip []byte
 	DB  *bolt.DB
 }
 
+// BlockchainIterator used to iterate over blocks
 type BlockchainIterator struct {
 	currentHash []byte
 	db          *bolt.DB
@@ -31,7 +33,7 @@ type BlockchainIterator struct {
 
 // CreateBlockchain creates a new blockchain DB
 func CreateBlockchain(address string, nodeID int) (*Blockchain, error) {
-	dbFile := fmt.Sprintf("blockchain_%s.db", nodeID)
+	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
 		os.Exit(1)
