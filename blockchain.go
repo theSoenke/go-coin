@@ -35,8 +35,7 @@ type BlockchainIterator struct {
 func CreateBlockchain(address string, nodeID int) (*Blockchain, error) {
 	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists(dbFile) {
-		fmt.Println("Blockchain already exists.")
-		os.Exit(1)
+		return nil, fmt.Errorf("blockchain '%s' already exists", dbFile)
 	}
 
 	var tip []byte
