@@ -46,9 +46,18 @@ func NewCoinbaseTX(to, data string) *Transaction {
 		data = fmt.Sprintf("Reward to '%s'", to)
 	}
 
-	txin := TXInput{[]byte{}, -1, nil, []byte(data)}
+	txin := TXInput{
+		Txid:      []byte{},
+		Vout:      -1,
+		Signature: nil,
+		PubKey:    []byte(data),
+	}
 	txout := NewTXOutput(subsidy, to)
-	tx := Transaction{nil, []TXInput{txin}, []TXOutput{*txout}}
+	tx := Transaction{
+		ID:   nil,
+		Vin:  []TXInput{txin},
+		Vout: []TXOutput{*txout},
+	}
 	tx.ID = tx.Hash()
 
 	return &tx
@@ -61,7 +70,6 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transac
 	}
 
 	txCopy := tx.TrimmedCopy()
-
 	for inID, vin := range txCopy.Vin {
 		prevTx := prevTXs[hex.EncodeToString(vin.Txid)]
 		txCopy.Vin[inID].Signature = nil
