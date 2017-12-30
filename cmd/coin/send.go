@@ -37,7 +37,9 @@ var cmdSend = &cobra.Command{
 		wallets, err := coin.NewWallets(nodeID)
 		printErr(err)
 
-		wallet := wallets.GetWallet(sendFrom)
+		wallet, err := wallets.GetWallet(sendFrom)
+		printErr(err)
+
 		UTXOSet := coin.UTXOSet{Blockchain: bc}
 		tx, err := coin.NewUTXOTransaction(&wallet, sendTo, sendAmount, &UTXOSet)
 		printErr(err)

@@ -43,8 +43,12 @@ func (ws *Wallets) GetAddresses() []string {
 }
 
 // GetWallet returns a Wallet by its address
-func (ws Wallets) GetWallet(address string) Wallet {
-	return *ws.Wallets[address]
+func (ws Wallets) GetWallet(address string) (Wallet, error) {
+	if wallet, ok := ws.Wallets[address]; ok {
+		return *wallet, nil
+	}
+
+	return Wallet{}, fmt.Errorf("address '%s' does not exist", address)
 }
 
 // LoadFromFile loads wallets from the file
