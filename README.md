@@ -1,17 +1,20 @@
-# coin
+# go-coin
 
-## Getting started
-1. Create a Wallet
+Experimental Blockchain in Go
 
-    ```coin wallet```
+## Quick Start
+### Install
 
-2. Initialize the Blockchain
+    go get github.com/thesoenke/go-coin
 
-    ```coin init --address <address for genesis reward>```
+### Create a Wallet
 
-## Use the Blockchain
+    coin wallet
+
+### Initialize Blockchain
+
+    coin init --address <address for genesis reward>
+
 ### Send coins
-```coin send --from <sender address> --to <receiver address> --amount <coins>```
 
-### List balance
-```coin balance --address <address>```
+    coin send --from <sender address> --to <receiver address> --amount <coins>
