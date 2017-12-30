@@ -15,6 +15,7 @@ import (
 
 const subsidy = 10
 
+// Transaction represents a Blockchain transaction
 type Transaction struct {
 	ID   []byte
 	Vin  []TXInput
@@ -67,6 +68,7 @@ func (tx Transaction) SetID() {
 	tx.ID = hash[:]
 }
 
+// Sign signs each input of a Transaction
 func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transaction) error {
 	if tx.IsCoinbase() {
 		return nil
@@ -111,6 +113,7 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 	return txCopy
 }
 
+// Verify verifies signatures of Transaction inputs
 func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 	txCopy := tx.TrimmedCopy()
 	curve := elliptic.P256()
@@ -134,7 +137,7 @@ func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 		x.SetBytes(vin.PubKey[:(keyLen / 2)])
 		y.SetBytes(vin.PubKey[(keyLen / 2):])
 
-		rawPubKey := ecdsa.PublicKey{curve, &x, &y}
+		rawPubKey := ecdsa.PublicKey{Curve: curve, X: &x, Y: &y}
 		if ecdsa.Verify(&rawPubKey, txCopy.ID, &r, &s) == false {
 			return false
 		}
