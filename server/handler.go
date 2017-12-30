@@ -266,6 +266,7 @@ func handleVersion(request []byte, bc *coin.Blockchain) {
 
 	// sendAddr(payload.AddrFrom)
 	if !nodeIsKnown(payload.AddrFrom) {
+		fmt.Printf("New node %s has connected\n", payload.AddrFrom)
 		knownNodes = append(knownNodes, payload.AddrFrom)
 	}
 }
