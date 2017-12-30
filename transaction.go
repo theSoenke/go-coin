@@ -54,20 +54,6 @@ func NewCoinbaseTX(to, data string) *Transaction {
 	return &tx
 }
 
-// SetID sets ID of a transaction
-func (tx Transaction) SetID() {
-	var encoded bytes.Buffer
-	var hash [32]byte
-
-	enc := gob.NewEncoder(&encoded)
-	err := enc.Encode(tx)
-	if err != nil {
-		log.Panic(err)
-	}
-	hash = sha256.Sum256(encoded.Bytes())
-	tx.ID = hash[:]
-}
-
 // Sign signs each input of a Transaction
 func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transaction) error {
 	if tx.IsCoinbase() {
