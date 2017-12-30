@@ -11,7 +11,7 @@ import (
 var minerAddress string
 var cmdServer = &cobra.Command{
 	Use:   "server",
-	Short: "Start a new node",
+	Short: "Start a new node server",
 	Run: func(cmd *cobra.Command, args []string) {
 		if !coin.ValidateAddress(minerAddress) {
 			err := fmt.Errorf("miner address is not valid")
@@ -19,7 +19,7 @@ var cmdServer = &cobra.Command{
 		}
 
 		fmt.Printf("Started mining. Address to receive rewards: %s\n", minerAddress)
-		server.StartServer(nodeID, minerAddress)
+		server.Start(nodeID, minerAddress)
 	},
 }
 
