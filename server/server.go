@@ -114,16 +114,7 @@ func sendData(addr string, data []byte) {
 	conn, err := net.Dial(protocol, addr)
 	if err != nil {
 		fmt.Printf("%s is not available\n", addr)
-		var updatedNodes []string
-
-		for _, node := range knownNodes {
-			if node != addr {
-				updatedNodes = append(updatedNodes, node)
-			}
-		}
-
-		knownNodes = updatedNodes
-
+		removeNode(addr)
 		return
 	}
 	defer conn.Close()
@@ -175,4 +166,15 @@ func sendVersion(addr string, bc *coin.Blockchain) {
 	request := append(commandToBytes("version"), payload...)
 
 	sendData(addr, request)
+}
+
+func removeNode(addr string) {
+	var updatedNodes []string
+	for _, node := range knownNodes {
+		if node != addr {
+			updatedNodes = append(updatedNodes, node)
+		}
+	}
+
+	knownNodes = updatedNodes
 }

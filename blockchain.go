@@ -332,7 +332,7 @@ func (bc *Blockchain) FindTransaction(ID []byte) (Transaction, error) {
 		}
 	}
 
-	return Transaction{}, fmt.Errorf("transaction '%s' not found", string(ID))
+	return Transaction{}, fmt.Errorf("transaction not found")
 }
 
 // GetBestHeight returns the height of the latest block
@@ -410,8 +410,7 @@ func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey)
 
 // Iterator for the Blockchain
 func (bc *Blockchain) Iterator() *BlockchainIterator {
-	bci := &BlockchainIterator{bc.tip, bc.DB}
-
+	bci := &BlockchainIterator{currentHash: bc.tip, db: bc.DB}
 	return bci
 }
 

@@ -37,7 +37,7 @@ func handleConnection(conn net.Conn, bc *coin.Blockchain) {
 	case "version":
 		handleVersion(request, bc)
 	default:
-		fmt.Println("Unknown command!")
+		fmt.Printf("Unknown command '%s'\n", command)
 	}
 
 	conn.Close()
@@ -55,7 +55,7 @@ func handleAddr(request []byte) {
 	}
 
 	knownNodes = append(knownNodes, payload.AddrList...)
-	fmt.Printf("There are %d known nodes now!\n", len(knownNodes))
+	fmt.Printf("There %d known nodes\n", len(knownNodes))
 	requestBlocks()
 }
 
@@ -73,13 +73,11 @@ func handleBlock(request []byte, bc *coin.Blockchain) {
 	blockData := payload.Block
 	block := coin.DeserializeBlock(blockData)
 
-	fmt.Println("Received a new block!")
+	fmt.Printf("Received block %x with height %d\n", block.Hash, block.Height)
 	err = bc.AddBlock(block)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Printf("Added block %x\n", block.Hash)
 
 	if len(blocksInTransit) > 0 {
 		blockHash := blocksInTransit[0]
@@ -191,6 +189,7 @@ func handleTx(request []byte, bc *coin.Blockchain) {
 	}
 
 	mempool[hex.EncodeToString(tx.ID)] = tx
+	// Is the central node
 	if nodeAddress == knownNodes[0] {
 		for _, node := range knownNodes {
 			if node != nodeAddress && node != payload.AddFrom {
@@ -198,48 +197,47 @@ func handleTx(request []byte, bc *coin.Blockchain) {
 			}
 		}
 	} else {
-		if len(mempool) >= 2 && len(miningAddress) > 0 {
-		MineTransactions:
-			var txs []*coin.Transaction
+		for len(mempool) >= 2 {
+			mineBlock(bc)
+		}
+	}
+}
 
-			for id := range mempool {
-				tx := mempool[id]
-				if bc.VerifyTransaction(&tx) {
-					txs = append(txs, &tx)
-				}
-			}
+func mineBlock(bc *coin.Blockchain) {
+	var txs []*coin.Transaction
 
-			if len(txs) == 0 {
-				fmt.Println("All transactions are invalid! Waiting for new ones...")
-				return
-			}
+	for id := range mempool {
+		tx := mempool[id]
+		if bc.VerifyTransaction(&tx) {
+			txs = append(txs, &tx)
+		}
 
-			cbTx := coin.NewCoinbaseTX(miningAddress, "")
-			txs = append(txs, cbTx)
+		if len(txs) == 0 {
+			fmt.Println("all transactions are invalid")
+			return
+		}
+	}
 
-			newBlock, err := bc.MineBlock(txs)
-			if err != nil {
-				log.Fatal(err)
-			}
-			UTXOSet := coin.UTXOSet{Blockchain: bc}
-			UTXOSet.Reindex()
+	cbTx := coin.NewCoinbaseTX(miningAddress, "")
+	txs = append(txs, cbTx)
+	newBlock, err := bc.MineBlock(txs)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-			fmt.Printf("Mined new block with %d transactions\n", len(txs))
+	UTXOSet := coin.UTXOSet{Blockchain: bc}
+	UTXOSet.Reindex()
 
-			for _, tx := range txs {
-				txID := hex.EncodeToString(tx.ID)
-				delete(mempool, txID)
-			}
+	fmt.Printf("Mined new block with %d transactions\n", len(txs))
 
-			for _, node := range knownNodes {
-				if node != nodeAddress {
-					sendInv(node, "block", [][]byte{newBlock.Hash})
-				}
-			}
+	for _, tx := range txs {
+		txID := hex.EncodeToString(tx.ID)
+		delete(mempool, txID)
+	}
 
-			if len(mempool) > 0 {
-				goto MineTransactions
-			}
+	for _, node := range knownNodes {
+		if node != nodeAddress {
+			sendInv(node, "block", [][]byte{newBlock.Hash})
 		}
 	}
 }
@@ -266,7 +264,7 @@ func handleVersion(request []byte, bc *coin.Blockchain) {
 
 	// sendAddr(payload.AddrFrom)
 	if !nodeIsKnown(payload.AddrFrom) {
-		fmt.Printf("New node %s has connected\n", payload.AddrFrom)
+		fmt.Printf("New node %s connected\n", payload.AddrFrom)
 		knownNodes = append(knownNodes, payload.AddrFrom)
 	}
 }
