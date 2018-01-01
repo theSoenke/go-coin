@@ -197,7 +197,7 @@ func handleTx(request []byte, bc *coin.Blockchain) {
 			}
 		}
 	} else {
-		for len(mempool) >= 2 {
+		for len(mempool) >= transactionsInBlock {
 			mineBlock(bc)
 		}
 	}

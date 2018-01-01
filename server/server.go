@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	protocol      = "tcp"
-	nodeVersion   = 1
-	commandLength = 12
+	protocol            = "tcp"
+	nodeVersion         = 1
+	commandLength       = 12
+	transactionsInBlock = 2
 )
 
 var (
