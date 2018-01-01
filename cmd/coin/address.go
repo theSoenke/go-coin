@@ -8,8 +8,8 @@ import (
 )
 
 var cmdWallet = &cobra.Command{
-	Use:   "wallet",
-	Short: "Create a new wallet",
+	Use:   "address",
+	Short: "Generate a new address",
 	Run: func(cmd *cobra.Command, args []string) {
 		wallets, _ := coin.NewWallets(nodeID)
 		address, err := wallets.CreateWallet()
