@@ -19,20 +19,22 @@ Experimental Blockchain in Go
 
     coin send --from <sender address> --to <receiver address> --amount <coins>
 
-## Run multiple Nodes locally
-1. Create a initial Blockchain:
+## Run multiple nodes locally
+### Create an initial Blockchain
 
-    `coin init --address <address for genesis reward>`
-2. Copy the Blockchain for each node:
+    coin init --address <address for genesis reward>
 
-     `cp blockchain_1.db blockchain_3000.db`
-3. Start the central Node. Central node is running at `localhost:3000`:
+### Copy the Blockchain for each node
 
-    `coin server --address <address for miner rewards> --node 3000`
-4. Start miner node:
+    cp blockchain_1.db blockchain_3000.db
+    cp blockchain_1.db blockchain_3001.db
 
-    `coin server --address <address for miner rewards> --node 3001`
+### Start a central node
 
-5. To access the wallet of a specific node add the parameter `--node <node id>`:
+    coin server --address <address for miner rewards> --node 3000
 
-    `coin list --node 3001`
+Central node is running at `localhost:3000`
+
+### Start miner node
+
+    coin server --address <address for miner rewards> --node 3001
