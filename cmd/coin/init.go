@@ -22,7 +22,8 @@ var cmdInit = &cobra.Command{
 		defer bc.DB.Close()
 
 		UTXOSet := coin.UTXOSet{Blockchain: bc}
-		UTXOSet.Reindex()
+		err = UTXOSet.Reindex()
+		printErr(err)
 	},
 }
 

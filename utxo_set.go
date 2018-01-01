@@ -13,6 +13,7 @@ type UTXOSet struct {
 	Blockchain *Blockchain
 }
 
+// Reindex all UTXOs in the DB
 func (u UTXOSet) Reindex() error {
 	db := u.Blockchain.DB
 	bucketName := []byte(utxoBucket)
@@ -25,13 +26,13 @@ func (u UTXOSet) Reindex() error {
 
 		_, err = tx.CreateBucket(bucketName)
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
 
 		return nil
 	})
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
 	UTXO := u.Blockchain.FindUTXO()
@@ -105,9 +106,6 @@ func (u UTXOSet) FindUTXO(pubKeyHash []byte) ([]TXOutput, error) {
 
 		return nil
 	})
-	if err != nil {
-		log.Panic(err)
-	}
 
 	return UTXOs, err
 }
