@@ -10,6 +10,7 @@ import (
 type TXOutput struct {
 	Value      int
 	PubKeyHash []byte
+	Address    string
 }
 
 // Lock signs the output
@@ -26,7 +27,7 @@ func (out *TXOutput) IsLockedWithKey(pubKeyHash []byte) bool {
 
 // NewTXOutput create a new TXOutput
 func NewTXOutput(value int, address string) *TXOutput {
-	txo := &TXOutput{value, nil}
+	txo := &TXOutput{Value: value, PubKeyHash: nil, Address: address}
 	txo.Lock([]byte(address))
 
 	return txo

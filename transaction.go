@@ -95,7 +95,7 @@ func (tx *Transaction) Sign(privKey ecdsa.PrivateKey, prevTXs map[string]Transac
 	return nil
 }
 
-// TrimmedCopy creates a trimmed copy of Transaction to be used in signing
+// TrimmedCopy creates a trimmed copy of a transaction to be used in signing
 func (tx *Transaction) TrimmedCopy() Transaction {
 	var inputs []TXInput
 	var outputs []TXOutput
@@ -105,11 +105,10 @@ func (tx *Transaction) TrimmedCopy() Transaction {
 	}
 
 	for _, vout := range tx.Vout {
-		outputs = append(outputs, TXOutput{Value: vout.Value, PubKeyHash: vout.PubKeyHash})
+		outputs = append(outputs, TXOutput{Value: vout.Value, PubKeyHash: vout.PubKeyHash, Address: vout.Address})
 	}
 
-	txCopy := Transaction{tx.ID, inputs, outputs}
-
+	txCopy := Transaction{ID: tx.ID, Vin: inputs, Vout: outputs}
 	return txCopy
 }
 
