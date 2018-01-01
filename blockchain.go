@@ -251,7 +251,6 @@ func (bc *Blockchain) FindSpendableOutputs(pubKeyHash []byte, amount int) (int, 
 	unspentTXs := bc.FindUnspentTransactions(pubKeyHash)
 	accumulated := 0
 
-Work:
 	for _, tx := range unspentTXs {
 		txID := hex.EncodeToString(tx.ID)
 
@@ -261,7 +260,7 @@ Work:
 				unspentOutputs[txID] = append(unspentOutputs[txID], outIdx)
 
 				if accumulated >= amount {
-					break Work
+					return accumulated, unspentOutputs
 				}
 			}
 		}
