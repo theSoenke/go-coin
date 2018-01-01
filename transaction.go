@@ -176,7 +176,7 @@ func NewUTXOTransaction(wallet *Wallet, to string, amount int, UTXOSet *UTXOSet)
 	for txid, outs := range validOutputs {
 		txID, err := hex.DecodeString(txid)
 		if err != nil {
-			log.Panic(err)
+			return nil, err
 		}
 
 		for _, out := range outs {
@@ -194,9 +194,8 @@ func NewUTXOTransaction(wallet *Wallet, to string, amount int, UTXOSet *UTXOSet)
 
 	tx := Transaction{nil, inputs, outputs}
 	tx.ID = tx.Hash()
-	UTXOSet.Blockchain.SignTransaction(&tx, wallet.PrivateKey)
-
-	return &tx, nil
+	err = UTXOSet.Blockchain.SignTransaction(&tx, wallet.PrivateKey)
+	return &tx, err
 }
 
 // Hash returns the hash of the Transaction

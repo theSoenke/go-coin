@@ -394,18 +394,20 @@ func (bc *Blockchain) GetBlockHashes() [][]byte {
 }
 
 // SignTransaction signs inputs of a Transaction
-func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey) {
+func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey) error {
 	prevTXs := make(map[string]Transaction)
 
 	for _, vin := range tx.Vin {
 		prevTX, err := bc.FindTransaction(vin.Txid)
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
+
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
 
 	tx.Sign(privKey, prevTXs)
+	return nil
 }
 
 // Iterator for the Blockchain
