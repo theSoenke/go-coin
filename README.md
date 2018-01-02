@@ -7,9 +7,9 @@ Experimental Blockchain in Go
 
     go get github.com/thesoenke/go-coin
 
-### Create a Wallet
+### Generate an address
 
-    coin wallet
+    coin address
 
 ### Initialize Blockchain
 
@@ -38,3 +38,6 @@ Central node is running at `localhost:3000`
 ### Start miner node
 
     coin server --address <address for miner rewards> --node 3001
+
+## Credits
+Based on this great [blog post](https://jeiwan.cc/posts/building-blockchain-in-go-part-1)
