@@ -63,8 +63,8 @@ func CreateBlockchain(address string, nodeID int) (*Blockchain, error) {
 		if err != nil {
 			return err
 		}
-		tip = genesis.Hash
 
+		tip = genesis.Hash
 		return nil
 	})
 
@@ -73,7 +73,6 @@ func CreateBlockchain(address string, nodeID int) (*Blockchain, error) {
 	}
 
 	bc := Blockchain{tip, db}
-
 	return &bc, nil
 }
 
@@ -95,12 +94,9 @@ func NewBlockchain(nodeID int) (*Blockchain, error) {
 		tip = b.Get([]byte("l"))
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	bc := Blockchain{tip, db}
-	return &bc, nil
+	return &bc, err
 }
 
 // MineBlock mines a new block with the provided transactions
@@ -154,11 +150,11 @@ func (bc *Blockchain) VerifyTransaction(tx *Transaction) bool {
 	}
 
 	prevTXs := make(map[string]Transaction)
-
 	for _, vin := range tx.Vin {
 		prevTX, err := bc.FindTransaction(vin.Txid)
 		if err != nil {
-			log.Panic(err)
+			fmt.Printf("error: %s\n", err.Error())
+			return false
 		}
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
@@ -335,7 +331,7 @@ func (bc *Blockchain) FindTransaction(ID []byte) (Transaction, error) {
 }
 
 // GetBestHeight returns the height of the latest block
-func (bc *Blockchain) GetBestHeight() int {
+func (bc *Blockchain) GetBestHeight() (int, error) {
 	var lastBlock Block
 
 	err := bc.DB.View(func(tx *bolt.Tx) error {
@@ -343,14 +339,10 @@ func (bc *Blockchain) GetBestHeight() int {
 		lastHash := b.Get([]byte("l"))
 		blockData := b.Get(lastHash)
 		lastBlock = *DeserializeBlock(blockData)
-
 		return nil
 	})
-	if err != nil {
-		log.Panic(err)
-	}
 
-	return lastBlock.Height
+	return lastBlock.Height, err
 }
 
 // GetBlock finds a block by its hash and returns it
@@ -365,14 +357,10 @@ func (bc *Blockchain) GetBlock(blockHash []byte) (Block, error) {
 		}
 
 		block = *DeserializeBlock(blockData)
-
 		return nil
 	})
-	if err != nil {
-		return block, err
-	}
 
-	return block, nil
+	return block, err
 }
 
 // GetBlockHashes returns a list of hashes of all the blocks in the chain
@@ -405,8 +393,8 @@ func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey)
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
 
-	tx.Sign(privKey, prevTXs)
-	return nil
+	err := tx.Sign(privKey, prevTXs)
+	return err
 }
 
 // Iterator for the Blockchain

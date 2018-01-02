@@ -142,7 +142,7 @@ func handleGetBlocks(request []byte, bc *coin.Blockchain) {
 	sendInv(payload.AddrFrom, "block", blocks)
 }
 
-func handleGetData(request []byte, bc *coin.Blockchain) {
+func handleGetData(request []byte, bc *coin.Blockchain) error {
 	var buff bytes.Buffer
 	var payload getdata
 
@@ -150,28 +150,38 @@ func handleGetData(request []byte, bc *coin.Blockchain) {
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
 	if err != nil {
-		log.Panic(err)
+		fmt.Println("invalid payload")
+		return nil
 	}
 
 	if payload.Type == "block" {
 		block, err := bc.GetBlock([]byte(payload.ID))
 		if err != nil {
-			return
+			return err
 		}
 
-		sendBlock(payload.AddrFrom, &block)
+		err = sendBlock(payload.AddrFrom, &block)
+		if err != nil {
+			return err
+		}
 	}
 
 	if payload.Type == "tx" {
 		txID := hex.EncodeToString(payload.ID)
 		tx := mempool[txID]
 
-		sendTx(payload.AddrFrom, &tx)
+		err = sendTx(payload.AddrFrom, &tx)
+		if err != nil {
+			fmt.Printf("Failed sending tx to %s\n", payload.AddrFrom)
+			return nil
+		}
 		// delete(mempool, txID)
 	}
+
+	return nil
 }
 
-func handleTx(request []byte, bc *coin.Blockchain) {
+func handleTx(request []byte, bc *coin.Blockchain) error {
 	var buff bytes.Buffer
 	var payload tx
 
@@ -179,13 +189,13 @@ func handleTx(request []byte, bc *coin.Blockchain) {
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
 	txData := payload.Transaction
 	tx, err := coin.DeserializeTransaction(txData)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	mempool[hex.EncodeToString(tx.ID)] = tx
@@ -193,17 +203,25 @@ func handleTx(request []byte, bc *coin.Blockchain) {
 	if nodeAddress == knownNodes[0] {
 		for _, node := range knownNodes {
 			if node != nodeAddress && node != payload.AddFrom {
-				sendInv(node, "tx", [][]byte{tx.ID})
+				err = sendInv(node, "tx", [][]byte{tx.ID})
+				if err != nil {
+					fmt.Printf("Could not reach node %s\n", node)
+				}
 			}
 		}
 	} else {
 		for len(mempool) >= transactionsInBlock {
-			mineBlock(bc)
+			err = mineBlock(bc)
+			if err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
-func mineBlock(bc *coin.Blockchain) {
+func mineBlock(bc *coin.Blockchain) error {
 	var txs []*coin.Transaction
 
 	for id := range mempool {
@@ -214,7 +232,7 @@ func mineBlock(bc *coin.Blockchain) {
 
 		if len(txs) == 0 {
 			fmt.Println("all transactions are invalid")
-			return
+			return nil
 		}
 	}
 
@@ -222,7 +240,7 @@ func mineBlock(bc *coin.Blockchain) {
 	txs = append(txs, cbTx)
 	newBlock, err := bc.MineBlock(txs)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	UTXOSet := coin.UTXOSet{Blockchain: bc}
@@ -237,12 +255,15 @@ func mineBlock(bc *coin.Blockchain) {
 
 	for _, node := range knownNodes {
 		if node != nodeAddress {
-			sendInv(node, "block", [][]byte{newBlock.Hash})
+			err = sendInv(node, "block", [][]byte{newBlock.Hash})
+			fmt.Printf("Could not reach node %s\n", node)
 		}
 	}
+
+	return nil
 }
 
-func handleVersion(request []byte, bc *coin.Blockchain) {
+func handleVersion(request []byte, bc *coin.Blockchain) error {
 	var buff bytes.Buffer
 	var payload version
 
@@ -250,16 +271,22 @@ func handleVersion(request []byte, bc *coin.Blockchain) {
 	dec := gob.NewDecoder(&buff)
 	err := dec.Decode(&payload)
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
-	myBestHeight := bc.GetBestHeight()
-	foreignerBestHeight := payload.BestHeight
+	myBestHeight, err := bc.GetBestHeight()
+	if err != nil {
+		return err
+	}
 
+	foreignerBestHeight := payload.BestHeight
 	if myBestHeight < foreignerBestHeight {
 		sendGetBlocks(payload.AddrFrom)
 	} else if myBestHeight > foreignerBestHeight {
-		sendVersion(payload.AddrFrom, bc)
+		err = sendVersion(payload.AddrFrom, bc)
+		if err != nil {
+			return err
+		}
 	}
 
 	// sendAddr(payload.AddrFrom)
@@ -267,6 +294,8 @@ func handleVersion(request []byte, bc *coin.Blockchain) {
 		fmt.Printf("New node %s connected\n", payload.AddrFrom)
 		knownNodes = append(knownNodes, payload.AddrFrom)
 	}
+
+	return nil
 }
 
 func nodeIsKnown(addr string) bool {

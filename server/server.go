@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"net"
 
 	"github.com/thesoenke/go-coin"
@@ -62,28 +61,32 @@ type version struct {
 }
 
 // Start server to run a node
-func Start(nodeID int, minerAddress string) {
+func Start(nodeID int, minerAddress string) error {
 	nodeAddress = fmt.Sprintf("localhost:%d", nodeID)
 	miningAddress = minerAddress
 	ln, err := net.Listen(protocol, nodeAddress)
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
-	defer ln.Close()
 
+	defer ln.Close()
 	bc, err := coin.NewBlockchain(nodeID)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if nodeAddress != knownNodes[0] {
-		sendVersion(knownNodes[0], bc)
+		err = sendVersion(knownNodes[0], bc)
+		if err != nil {
+			fmt.Println("Failed sending version to central node")
+			return err
+		}
 	}
 
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Panic(err)
+			return err
 		}
 		go handleConnection(conn, bc)
 	}
@@ -91,73 +94,84 @@ func Start(nodeID int, minerAddress string) {
 
 // SendTx sends a transaction to another node
 func SendTx(tx *coin.Transaction) {
-	sendTx(knownNodes[0], tx)
+	err := sendTx(knownNodes[0], tx)
+	if err != nil {
+		fmt.Println("Failed sending transaction to central node")
+	}
 }
 
-func sendAddr(address string) {
+func sendAddr(address string) error {
 	nodes := addr{knownNodes}
 	nodes.AddrList = append(nodes.AddrList, nodeAddress)
 	payload := gobEncode(nodes)
 	request := append(commandToBytes("addr"), payload...)
 
-	sendData(address, request)
+	err := sendData(address, request)
+	return err
 }
 
-func sendBlock(addr string, b *coin.Block) {
+func sendBlock(addr string, b *coin.Block) error {
 	data := block{nodeAddress, b.Serialize()}
 	payload := gobEncode(data)
 	request := append(commandToBytes("block"), payload...)
 
-	sendData(addr, request)
+	err := sendData(addr, request)
+	return err
 }
 
-func sendData(addr string, data []byte) {
+func sendData(addr string, data []byte) error {
 	conn, err := net.Dial(protocol, addr)
 	if err != nil {
 		fmt.Printf("%s is not available\n", addr)
 		removeNode(addr)
-		return
+		return err
 	}
-	defer conn.Close()
 
+	defer conn.Close()
 	_, err = io.Copy(conn, bytes.NewReader(data))
-	if err != nil {
-		log.Panic(err)
-	}
+	return err
 }
 
-func sendInv(address, kind string, items [][]byte) {
+func sendInv(address, kind string, items [][]byte) error {
 	inventory := inv{AddrFrom: nodeAddress, Type: kind, Items: items}
 	payload := gobEncode(inventory)
 	request := append(commandToBytes("inv"), payload...)
 
-	sendData(address, request)
+	err := sendData(address, request)
+	return err
 }
 
-func sendGetBlocks(address string) {
+func sendGetBlocks(address string) error {
 	payload := gobEncode(getblocks{AddrFrom: nodeAddress})
 	request := append(commandToBytes("getblocks"), payload...)
 
-	sendData(address, request)
+	err := sendData(address, request)
+	return err
 }
 
-func sendGetData(address, kind string, id []byte) {
+func sendGetData(address, kind string, id []byte) error {
 	payload := gobEncode(getdata{nodeAddress, kind, id})
 	request := append(commandToBytes("getdata"), payload...)
 
-	sendData(address, request)
+	err := sendData(address, request)
+	return err
 }
 
-func sendTx(addr string, tnx *coin.Transaction) {
+func sendTx(addr string, tnx *coin.Transaction) error {
 	data := tx{nodeAddress, tnx.Serialize()}
 	payload := gobEncode(data)
 	request := append(commandToBytes("tx"), payload...)
 
-	sendData(addr, request)
+	err := sendData(addr, request)
+	return err
 }
 
-func sendVersion(addr string, bc *coin.Blockchain) {
-	bestHeight := bc.GetBestHeight()
+func sendVersion(addr string, bc *coin.Blockchain) error {
+	bestHeight, err := bc.GetBestHeight()
+	if err != nil {
+		return err
+	}
+
 	payload := gobEncode(version{
 		Version:    nodeVersion,
 		BestHeight: bestHeight,
@@ -166,7 +180,8 @@ func sendVersion(addr string, bc *coin.Blockchain) {
 
 	request := append(commandToBytes("version"), payload...)
 
-	sendData(addr, request)
+	err = sendData(addr, request)
+	return err
 }
 
 func removeNode(addr string) {

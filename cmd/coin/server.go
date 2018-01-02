@@ -19,7 +19,8 @@ var cmdServer = &cobra.Command{
 		}
 
 		fmt.Printf("Started mining. Address to receive rewards: %s\n", minerAddress)
-		server.Start(nodeID, minerAddress)
+		err := server.Start(nodeID, minerAddress)
+		printErr(err)
 	},
 }
 
