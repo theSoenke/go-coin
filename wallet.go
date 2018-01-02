@@ -24,21 +24,21 @@ type Wallet struct {
 }
 
 // NewWallet creates and returns a Wallet
-func NewWallet() *Wallet {
-	private, public := newKeyPair()
+func NewWallet() (*Wallet, error) {
+	private, public, err := newKeyPair()
 	wallet := Wallet{private, public}
-	return &wallet
+	return &wallet, err
 }
 
-func newKeyPair() (ecdsa.PrivateKey, []byte) {
+func newKeyPair() (ecdsa.PrivateKey, []byte, error) {
 	curve := elliptic.P256()
 	private, err := ecdsa.GenerateKey(curve, rand.Reader)
 	if err != nil {
-		log.Panic(err)
+		return ecdsa.PrivateKey{}, nil, err
 	}
 
 	pubKey := append(private.PublicKey.X.Bytes(), private.PublicKey.Y.Bytes()...)
-	return *private, pubKey
+	return *private, pubKey, nil
 }
 
 // GetAddress returns wallet address

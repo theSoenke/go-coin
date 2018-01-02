@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 )
 
@@ -25,7 +24,11 @@ func NewWallets(nodeID int) (*Wallets, error) {
 
 // CreateWallet adds a Wallet to Wallets
 func (ws *Wallets) CreateWallet() (string, error) {
-	wallet := NewWallet()
+	wallet, err := NewWallet()
+	if err != nil {
+		return "", err
+	}
+
 	address := string(wallet.GetAddress())
 	ws.Wallets[address] = wallet
 	return address, nil
@@ -60,7 +63,7 @@ func (ws *Wallets) LoadFromFile(nodeID int) error {
 
 	fileContent, err := ioutil.ReadFile(walletFile)
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
 	var wallets Wallets
@@ -68,11 +71,10 @@ func (ws *Wallets) LoadFromFile(nodeID int) error {
 	decoder := gob.NewDecoder(bytes.NewReader(fileContent))
 	err = decoder.Decode(&wallets)
 	if err != nil {
-		log.Panic(err)
+		return err
 	}
 
 	ws.Wallets = wallets.Wallets
-
 	return nil
 }
 
