@@ -8,7 +8,7 @@ import (
 
 func TestBase58(t *testing.T) {
 	for i := 0; i < 100; i++ {
-		_, public := newKeyPair()
+		_, public, _ := newKeyPair()
 		pubKeyHash := HashPubKey(public)
 
 		versionedPayload := append([]byte{version}, pubKeyHash...)
