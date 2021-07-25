@@ -257,6 +257,7 @@ func mineBlock(bc *coin.Blockchain) error {
 		if node != nodeAddress {
 			err = sendInv(node, "block", [][]byte{newBlock.Hash})
 			fmt.Printf("Could not reach node %s\n", node)
+			return err
 		}
 	}
 

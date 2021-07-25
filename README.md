@@ -5,7 +5,7 @@ Experimental Blockchain in Go
 ## Quick Start
 ### Install
 
-    go get github.com/thesoenke/go-coin
+    go install ./...
 
 ### Generate an address
 
